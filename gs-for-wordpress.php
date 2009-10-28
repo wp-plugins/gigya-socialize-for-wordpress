@@ -548,7 +548,7 @@ if( !class_exists( 'GigyaSocializeForWordPress' ) ) {
 		 */
 		function registerNewGigyaUser( $gigyaData ) {
 			require_once ( ABSPATH . WPINC . '/registration.php' );
-			$nick = sanitize_user( $gigyaData[ 'gigya-nickname' ] );
+			$nick = str_replace(' ', '', sanitize_user( $gigyaData[ 'gigya-nickname' ] ) );
 			if( $nick === '' ) {
 				$nick = ucfirst( $gigyaData[ 'gigya-login-provider' ] ) . 'User';
 			}
