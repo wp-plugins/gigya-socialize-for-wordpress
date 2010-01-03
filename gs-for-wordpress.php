@@ -8,7 +8,8 @@ Version: 1.1.7
 Author URI: http://plugin-developer.com
 */
 
-if( !class_exists( 'GigyaSocializeForWordPress' ) ) {
+if( !class_exists( 'GigyaSocializeForWordPress' ) ) 
+{
 
 	class GigyaSocializeForWordPress {
 
