@@ -1,5 +1,5 @@
 === Gigya Socialize - Increase Registration and Engagement ===
-Contributors: nickohrn, gigya.com
+Contributors: gigya.com
 Tags: OpenID, Oauth, OpenSocial, FacebookConnect, MySpaceID, Twitter, authentication, newsfeed, tweet, status update, registration, social APIs, sharing, plugin, social bookmark, social network, blog, start page, Widget, Admin, Sidebar,Facebook, MySpace, community, registration, register, LinkedIn
 Requires at least: 2.6
 Tested up to: 2.9.1
