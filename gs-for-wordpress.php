@@ -5,7 +5,7 @@ Plugin URI: http://wiki.gigya.com/050_Socialize_Plugins/030_Wordpress_Plugin
 Description: Integrates a variety of features of the Gigya Socialize service into a WordPress blog.
 Author: Gigya
 Version: 1.2
-Author URI: http://wiki.gigya.com/050_Socialize_Plugins/030_Wordpress_Plugin
+Author URI: http://www.gigya.com
 */
 
 if( !class_exists( 'GigyaSocializeForWordPress' ) ) 
