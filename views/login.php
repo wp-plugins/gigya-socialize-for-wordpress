@@ -1,3 +1,10 @@
+<?php 
+if(!function_exists("admin_url"))
+{
+	echo "Error";
+}
+else{
+?>
 <link rel="stylesheet" href="<?php echo $this->pluginFolder; ?>/resources/login.css" type="text/css" media="screen" />
 <script type="text/javascript" src="<?php echo $this->jQueryLocation; ?>"></script>
 <script type="text/javascript" src="<?php echo $this->pluginFolder; ?>/resources/gs-for-wordpress.js"></script>
@@ -14,3 +21,4 @@
 		<?php if( $_GET[ 'action' ] == 'lostpassword' ) { ?>jQuery('#componentDiv').prepend('<p>If you previously signed-up using one of the services below, please click the appropriate button to login again.</p>').css('height', ( parseInt( jQuery('#componentDiv').css('height') ) + 50 ) + 'px' ); <?php } ?>
 	});
 </script>
+<?php } ?>

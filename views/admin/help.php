@@ -1,3 +1,10 @@
+<?php 
+if(!function_exists("_e"))
+{
+	echo "Error";
+}
+else{
+?>
 <div class="wrap">
 	<h2><?php _e( 'Gigya Socialize Help' ); ?></h2>
 	<p><?php _e( 'This page provides all the information you need to get up and running using the Gigya Socialize for WordPress plugin.' ); ?></p>
@@ -23,3 +30,4 @@ var login_params=
 	<p><?php _e( 'For the friend selector UI configuration, you must enter the entire line containing the ConfigUI parameter in the code 	obtained from the GUI designer.  The following is an example.' ); ?></p>
 	<pre><code>UIConfig:'<?php echo htmlentities( '<config><body><texts><links color="#FF2424"></links></texts><controls><scrollingarrow color="#FF4020"></scrollingarrow></controls><background background-color="#76FFC8" frame-color="#FF60BF"></background></body></config>' ); ?>'</code></pre>
 </div>
+<?php } ?>

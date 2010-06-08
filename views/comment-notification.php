@@ -1,3 +1,10 @@
+<?php 
+if(!isset($usersComment))
+{
+	echo "Error";
+}
+else{
+?>
 <?php /** The variables $usersComment are available here. **/ ?>
 <script type="text/javascript">
 jQuery(document).ready(function() { 
@@ -7,3 +14,4 @@ jQuery(document).ready(function() {
 	}
 });
 </script>
+<?php } ?>

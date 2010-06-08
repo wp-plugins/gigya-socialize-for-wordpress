@@ -1,3 +1,12 @@
+<?php 
+if(!function_exists("_e"))
+{
+	echo "Error";
+}
+else{
+?>
+
+
 <?php $settings = $this->getSettings(); ?>
 <div class="wrap">
 	<h2><?php _e( 'Gigya Socialize' ); ?></h2>
@@ -90,3 +99,5 @@
 	</p>
 	</form>
 </div>
+
+<?php } ?>

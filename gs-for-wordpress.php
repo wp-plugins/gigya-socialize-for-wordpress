@@ -4,9 +4,12 @@ Plugin Name: Gigya Socialize - Increase Registration and Engagement using Facebo
 Plugin URI: http://wiki.gigya.com/050_Socialize_Plugins/030_Wordpress_Plugin
 Description: Integrates a variety of features of the Gigya Socialize service into a WordPress blog.
 Author: Gigya
-Version: 1.2
+Version: 1.2.1
 Author URI: http://www.gigya.com
 */
+if(defined('WP_PLUGIN_URL'))
+{
+
 
 if( !class_exists( 'GigyaSocializeForWordPress' ) ) 
 {
@@ -708,4 +711,9 @@ if( !function_exists( 'json_encode' ) ) // Required to make this plugin compatib
 			return '{' . join( ',', $result ) . '}';
 		}
 	}
+}
+	
+}
+else{
+	echo "Error";
 }

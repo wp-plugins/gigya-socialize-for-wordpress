@@ -1,4 +1,11 @@
 <?php 
+if(!function_exists("__"))
+{
+	echo "Error";
+}
+else
+{
+
 $title = __( 'Connect your account' );
 echo $before_title . $title . $after_title;
 ?>
@@ -13,3 +20,4 @@ echo $before_title . $title . $after_title;
 		}
 	});
 </script>
+<?php } ?>

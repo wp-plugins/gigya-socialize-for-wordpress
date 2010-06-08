@@ -1,4 +1,11 @@
 <?php 
+if(!function_exists("add_query_arg"))
+{
+	echo "Error";
+}
+else
+{
+
 $title = empty( $options[ 'title' ] ) ? __( 'Join the Community' ) : $options[ 'title' ];
 echo $before_title . $title . $after_title;
 ?>
@@ -17,3 +24,4 @@ echo $before_title . $title . $after_title;
 		}
 	});
 </script>
+<?php } ?>

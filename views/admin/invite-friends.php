@@ -1,4 +1,12 @@
 <?php 
+if(!function_exists("_e"))
+{
+	echo "Error";
+}
+else{
+?>
+
+<?php 
 if( $this->userHasGigyaConnection() && in_array( $this->usersLoginProvider(), $this->inviteFriendsValidNetworks ) ) {
 	$settings = $this->getSettings();
 ?>
@@ -76,5 +84,7 @@ if( typeof( jQuery ) != 'undefined' && typeof( gigya ) != 'undefined' ) {
 }
 </script>
 <?php 
+}
+
 }
 ?>
