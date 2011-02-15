@@ -19,7 +19,7 @@ body.login {
 }
 
 .login-panel form {
-	height: 180px !important;
+	min-height: 180px !important;
 }
 
 .login-sep-text {

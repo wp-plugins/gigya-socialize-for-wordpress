@@ -158,8 +158,7 @@ if(!function_exists('gigya_share_plugin')) :
 			gigya_script_js();
 			$id = $post->ID;		
 			$permalink = get_permalink($id);
-			$title = get_the_title( $post->ID );
-	
+			$title = wp_specialchars(wp_specialchars($defaultContent,1),1);
 			$content .= "<script type='text/javascript'>";
 			$content .= "var act$id = new gigya.services.socialize.UserAction();";
 			$content .= "act$id.setUserMessage('');";
