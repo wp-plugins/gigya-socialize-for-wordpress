@@ -46,6 +46,18 @@ us at support@gigya-inc.com
 5. Share in posts - non registered user.
 6. Advance share for regsitered users. 
 
+== Changelog ==
+
+= 2.0.5 = 
+
+* Support Wordpress networks
+* New customized Share bar including Facebook like button and Google+1.
+* Bug fixes
+
+== Upgrade Notice ==
+
+Support Wordpress networks and new customized Share bar including Facebook like button and Google+1
+
 == FAQ ==
 
 How does the authentication part work?
