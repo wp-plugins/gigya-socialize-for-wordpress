@@ -1,5 +1,13 @@
 <?php
+
+/*
+ * Plugin editing permission levels
+ */
 define( "GIGYA__PERMISSION_LEVEL", "manage_options" );
+define( "GIGYA__SECRET_PERMISSION_LEVEL", "install_plugins" ); // Network super admin + single site admin
+// custom Gigya capabilities are added separately on installation
+define( "CUSTOM_GIGYA_EDIT", 'edit_gigya' );
+define( "CUSTOM_GIGYA_EDIT_SECRET", 'edit_gigya_secret' );
 
 class GigyaSettings {
 
@@ -27,10 +35,19 @@ class GigyaSettings {
 
 		// Add settings sections.
 		foreach ( $this->getSections() as $id => $section ) {
+            $option_group = $section['slug'] . '-group';
 			add_settings_section( $id, $section['title'], $section['func'], $section['slug'] );
-			register_setting( $section['slug'] . '-group', $section['slug'], array( $this, 'validate' ) );
+			register_setting( $option_group, $section['slug'], array( $this, 'validate' ) );
+            add_filter("option_page_capability_{$option_group}", array( $this, 'addGigyaCapabilities') );
 		}
 	}
+
+    /**
+     * Add gigya edit capability to allow custom roles to edit Gigya
+     */
+    public function addGigyaCapabilities() {
+        return CUSTOM_GIGYA_EDIT;
+    }
 
 	/**
 	 * @param $input
@@ -52,16 +69,31 @@ class GigyaSettings {
 	 */
 	public function adminMenu() {
 
-		// Register the main Gigya setting route page.
-		add_menu_page( 'Gigya', 'Gigya', GIGYA__PERMISSION_LEVEL, 'gigya_global_settings', array( $this, 'adminPage' ), GIGYA__PLUGIN_URL . 'admin/images/favicon_28px.png', '70.1' );
+		// Default admin capabilities
+		if (current_user_can('GIGYA__PERMISSION_LEVEL')) {
+			// Register the main Gigya setting route page.
+			add_menu_page( 'Gigya', 'Gigya', GIGYA__PERMISSION_LEVEL, 'gigya_global_settings', array( $this, 'adminPage' ), GIGYA__PLUGIN_URL . 'admin/images/favicon_28px.png', '70.1' );
 
-		// Register the sub-menus Gigya setting pages.
-		foreach ( $this->getSections() as $section ) {
+			// Register the sub-menus Gigya setting pages.
+			foreach ( $this->getSections() as $section ) {
 
-			require_once GIGYA__PLUGIN_DIR . 'admin/forms/' . $section['func'] . '.php';
-			add_submenu_page( 'gigya_global_settings', __( $section['title'], $section['title'] ), __( $section['title'], $section['title'] ), GIGYA__PERMISSION_LEVEL, $section['slug'], array( $this, 'adminPage' ) );
+				require_once GIGYA__PLUGIN_DIR . 'admin/forms/' . $section['func'] . '.php';
+				add_submenu_page( 'gigya_global_settings', __( $section['title'], $section['title'] ), __( $section['title'], $section['title'] ), GIGYA__PERMISSION_LEVEL, $section['slug'], array( $this, 'adminPage' ) );
 
+			}
+		} elseif ( current_user_can( CUSTOM_GIGYA_EDIT )) {
+			// Register the main Gigya setting route page.
+			add_menu_page( 'Gigya', 'Gigya', CUSTOM_GIGYA_EDIT, 'gigya_global_settings', array( $this, 'adminPage' ), GIGYA__PLUGIN_URL . 'admin/images/favicon_28px.png', '70.1' );
+
+			// Register the sub-menus Gigya setting pages.
+			foreach ( $this->getSections() as $section ) {
+
+				require_once GIGYA__PLUGIN_DIR . 'admin/forms/' . $section['func'] . '.php';
+				add_submenu_page( 'gigya_global_settings', __( $section['title'], $section['title'] ), __( $section['title'], $section['title'] ), CUSTOM_GIGYA_EDIT, $section['slug'], array( $this, 'adminPage' ) );
+
+			}
 		}
+
 	}
 
 
@@ -69,7 +101,7 @@ class GigyaSettings {
 	 * Returns the form sections definition.
 	 * @return array
 	 */
-	public function getSections() {
+	public static function getSections() {
 		return array(
 				'gigya_global_settings'    => array(
 						'title' => 'Global Settings',
@@ -153,23 +185,57 @@ class GigyaSettings {
 
 		} elseif ( isset( $_POST['gigya_global_settings'] ) ) {
 			$cms = new gigyaCMS();
+			STATIC::_setSecret();
 			$res = $cms->apiValidate( $_POST['gigya_global_settings']['api_key'], $_POST['gigya_global_settings']['api_secret'], $_POST['gigya_global_settings']['data_center'] );
 			if (!empty($res)) {
-				$errorCode = $res->getErrorCode();
-				if ( $errorCode == 301001 ) {
-					$_POST['gigya_global_settings']['data_center'] = $res->apiDomain;
-					$msg
-					                                               =
-						$res->getErrorMessage() . '. ' . 'This API key is served by: ' . $res->apiDomain;
-					add_settings_error( 'gigiya_data_canter', 'validation', $msg, 'error' );
-				} elseif ( $errorCode > 0 ) {
-					add_settings_error( 'General setting error', $errorCode, $res->getErrorMessage(), 'error' );
+				$gigyaErrCode = $res->getErrorCode();
+				if ( $gigyaErrCode > 0 ) {
+                    $gigyaErrMsg = $res->getErrorMessage();
+                    $errorsLink = "<a href='http://developers.gigya.com/037_API_reference/zz_Response_Codes_and_Errors' target='_blank'>Response_Codes_and_Errors</a>";
+                    $message = "Gigya API error: {$gigyaErrCode} - {$gigyaErrMsg}. For more information please refer to {$errorsLink}";
+					add_settings_error( 'gigya_global_settings', 'api_validate', $message, 'error' );
+                    // prevent updating values
+                    STATIC::_keepOldApiValues();
 				}
-			} else{
-				add_settings_error( 'General setting error', -1, 'Error sending request to gigya', 'error' );
+			} else {
+				add_settings_error( 'gigya_global_settings', 'api_validate', 'Error sending request to gigya', 'error' );
 			}
-
 		}
 	}
+
+	/**
+	 * Set the POST'ed secret key.
+	 * If its not submitted, take it from DB.
+	 *
+	 * @param obj $cms
+	 */
+	public static function _setSecret() {
+		if ( empty($_POST['gigya_global_settings']['api_secret']) ) {
+			$options = STATIC::_setSiteOptions();
+			$_POST['gigya_global_settings']['api_secret'] = $options['api_secret'];
+		}
+	}
+
+    /**
+     * Set the posted api related values to the old (from DB) values
+     */
+    public static function _keepOldApiValues() {
+        $options = STATIC::_setSiteOptions();
+        $_POST['gigya_global_settings']['api_key'] = $options['api_key'];
+        $_POST['gigya_global_settings']['api_secret'] = $options['api_secret'];
+        $_POST['gigya_global_settings']['data_center'] = $options['data_center'];
+    }
+
+    /**
+     * If multisite, get options from main site, else from current site
+     */
+    public static function _setSiteOptions() {
+        if ( is_multisite() ) {
+            $options = get_blog_option( 1, GIGYA__SETTINGS_GLOBAL );
+        } else {
+            $options = get_option( GIGYA__SETTINGS_GLOBAL );
+        }
+        return $options;
+    }
 
 }

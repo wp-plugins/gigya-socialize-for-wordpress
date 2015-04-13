@@ -16,7 +16,7 @@
  */
 define( 'GIGYA__MINIMUM_WP_VERSION', '3.5' );
 define( 'GIGYA__MINIMUM_PHP_VERSION', '5.2' );
-define( 'GIGYA__VERSION', '5.1' );
+define( 'GIGYA__VERSION', '5.2' );
 define( 'GIGYA__PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GIGYA__PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'GIGYA__CDN_PROTOCOL', ! empty( $_SERVER['HTTPS'] ) ? 'https://cdns' : 'http://cdn' );
@@ -43,6 +43,7 @@ function registerActivationHook() {
 	require_once GIGYA__PLUGIN_DIR . 'install.php';
 	$install = new GigyaInstall();
 	$install->init();
+	$install->add_gigya_caps();
 }
 
 /**
@@ -86,12 +87,18 @@ class GigyaAction {
 		add_action( 'user_register', array( $this, 'userRegister' ), 10, 1 );
 		add_action( 'wp_logout', array( $this, 'wpLogout' ) );
 		add_action( 'delete_user', array( $this, 'deleteUser' ) );
+		add_action( 'wpmu_delete_user', array( $this, 'deleteUser' ) );
 		add_action( 'widgets_init', array( $this, 'widgetsInit' ) );
+
 		add_shortcode( 'gigya_user_info', array( $this, 'shortcodeUserInfo' ) );
 		add_filter( 'the_content', array( $this, 'theContent' ) );
-		add_filter( 'comments_template', array( $this, 'commentsTemplate' ) );
 		add_filter( 'get_avatar', array( $this, 'getGigyaAvatar'), 10, 5);
 		add_filter( 'login_message', array( $this, 'rass_wp_login_custom_message') );
+
+        $comments_on = $this->gigya_comments_on();
+        if ($comments_on) {
+            add_filter( 'comments_template', array( $this, 'commentsTemplate' ) );
+        }
 
 		// Plugins shortcode activation switches
 		require_once GIGYA__PLUGIN_DIR . 'features/gigyaPluginsShortcodes.php';
@@ -102,27 +109,27 @@ class GigyaAction {
 		add_shortcode( 'gigya-social-login',  array( $shortcodes_class, 'gigyaSocialLoginScode'));
 
 		$comments_switch = get_option(GIGYA__SETTINGS_COMMENTS);
-		if ( $comments_switch['on'] == true || $comments_switch['on'] == '1') {
+		if ( (count($comments_switch) > 0) && ($comments_switch['on'] == true || $comments_switch['on'] == '1') ) {
 			add_shortcode( 'gigya-comments', array( $shortcodes_class, 'gigyaCommentsScode' ) );
 		}
 		$feed_switch = get_option(GIGYA__SETTINGS_FEED);
-		if ( $feed_switch['on'] == true || $feed_switch['on'] == '1' ) {
+		if ( (count($feed_switch) > 0) && ($feed_switch['on'] == true || $feed_switch['on'] == '1' ) ) {
 			add_shortcode( 'gigya-activity-feed', array( $shortcodes_class, 'gigyaFeedScode' ) );
 		}
 		$follow_bar_switch = get_option(GIGYA__SETTINGS_FOLLOW);
-		if ( $follow_bar_switch['on'] == true  || $follow_bar_switch['on'] == '1' ) {
+		if ( (count($follow_bar_switch) > 0) &&  ($follow_bar_switch['on'] == true  || $follow_bar_switch['on'] == '1') ) {
 			add_shortcode( 'gigya-follow-bar',  array( $shortcodes_class, 'gigyaFollowBarScode'));
 		}
 		$reaction_switch = get_option(GIGYA__SETTINGS_REACTIONS);
-		if ( $reaction_switch['on'] == true || $reaction_switch['on'] == '1' ) {
+		if (  (count($reaction_switch) > 0) && ($reaction_switch['on'] == true || $reaction_switch['on'] == '1') ) {
 			add_shortcode( 'gigya-reactions',  array( $shortcodes_class, 'gigyaReactionsScode'));
 		}
 		$share_switch = get_option(GIGYA__SETTINGS_SHARE);
-		if ( $share_switch['on'] == true || $share_switch['on'] == '1' ) {
+		if (  (count($share_switch) > 0) && ($share_switch['on'] == true || $share_switch['on'] == '1') ) {
 			add_shortcode( 'gigya-share-bar',  array( $shortcodes_class, 'gigyaShareBarScode'));
 		}
 		$gm_switch = get_option(GIGYA__SETTINGS_GM);
-		if ( $gm_switch['on'] == true || $gm_switch['on'] == '1' ) {
+		if (  (count($gm_switch) > 0) && ($gm_switch['on'] == true || $gm_switch['on'] == '1') ) {
 			add_shortcode( 'gigya-gm-achievements',  array( $shortcodes_class, 'gigyaGmScode'));
 			add_shortcode( 'gigya-gm-challenge-status',  array( $shortcodes_class, 'gigyaGmScode'));
 			add_shortcode( 'gigya-gm-leaderboard',  array( $shortcodes_class, 'gigyaGmScode'));
@@ -422,6 +429,7 @@ class GigyaAction {
 
 			// Social logout
 			if ( $this->login_options['mode'] == 'wp_sl' ) {
+                // Note: for SSO logout sync, when logout is clicked, first gigya logs out via front end (gigya.js)
 				$gigyaCMS = new GigyaCMS();
 				$gigyaCMS->userLogout( $account->ID );
 			} elseif ( $this->login_options['mode'] == 'raas' ) {
@@ -552,31 +560,34 @@ class GigyaAction {
 		return $content;
 	}
 
+    /**
+     * Check if the comments plugin is on
+     *
+     * @return bool plugin on/off
+     */
+    public function gigya_comments_on() {
+        $comments_options = get_option( GIGYA__SETTINGS_COMMENTS );
+        $comments_on      = _gigParamDefaultOn( $comments_options, 'on' );
+        return !empty( $comments_on ) ? TRUE : FALSE;
+    }
+
 	/**
 	 * Hook comments_template.
 	 *
 	 * @param $comment_template
-	 *
 	 * @return string
 	 */
 	public function commentsTemplate( $comment_template ) {
+        // Spider trap.
+        // When a spider detect we render the comment in the HTML for SEO
+        $is_spider = gigyaCMS::isSpider();
+        if ( ! empty( $is_spider ) ) {
+            // Override default WP comments template with comment spider.
+            return GIGYA__PLUGIN_DIR . 'admin/tpl/comments-spider.tpl.php';
+        }
 
-		// Comments plugin.
-		$comments_options = get_option( GIGYA__SETTINGS_COMMENTS );
-		$comments_on      = _gigParamDefaultOn( $comments_options, 'on' );
-		if ( ! empty( $comments_on ) ) {
-
-			// Spider trap.
-			// When a spider detect we render the comment in the HTML for SEO
-			$is_spider = gigyaCMS::isSpider();
-			if ( ! empty( $is_spider ) ) {
-				// Override default WP comments template with comment spider.
-				return GIGYA__PLUGIN_DIR . 'admin/tpl/comments-spider.tpl.php';
-			}
-
-			// Override default WP comments template.
-			return GIGYA__PLUGIN_DIR . 'admin/tpl/comments.tpl.php';
-		}
+        // Override default WP comments template.
+        return GIGYA__PLUGIN_DIR . 'admin/tpl/comments.tpl.php';
 	}
 
 	/**
@@ -869,4 +880,29 @@ function _underscore_to_camelcase( $str ) {
 		}
 	}
 	return $string;
+}
+
+/**
+ * Check if this is Multi site setup,
+ *  if multi site, check if settings were already saved once in the sub site
+ *   if so set default values to main site values
+ *   Once settings are saved on sub site once, they are independent from main site.
+ *
+ * @param string $settings_section
+ * @return array $values
+ */
+function _getGigyaSettingsValues( $settings_section ) {
+    // get section settings for the site
+    $section_values = get_option( $settings_section );
+    if (is_multisite()) {
+        $sub_site_settings_saved = $section_values['sub_site_settings_saved'];
+        if ($sub_site_settings_saved == TRUE) {
+            $values = $section_values;
+        } else {
+            $values = get_blog_option( 1, GIGYA__SETTINGS_GLOBAL );
+        }
+    } else { // this is a standard installation, so just use site values
+        $values = $section_values;
+    }
+    return $values;
 }

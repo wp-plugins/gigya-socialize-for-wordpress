@@ -18,6 +18,14 @@ var GigyaWp = GigyaWp || {};
       }
     }
   } );
+    
+  GigyaWp.userLoggedIn = function (response) {
+      GigyaWp.loggedUser = response.user.UID;
+      if (GigyaWp.loggedUser.length == 0) {
+          location.replace( gigyaParams.logoutUrl );
+      }
+      return GigyaWp.loggedUser;
+  }  
 
 // --------------------------------------------------------------------
 
