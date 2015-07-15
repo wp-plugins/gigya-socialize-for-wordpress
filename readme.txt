@@ -3,15 +3,15 @@
 Contributors: gigya.com, konforti, luciodiri
 Tags: Registration, Social Login, Oauth, OpenSocial, Graph API, Facebook Connect, Linkedin, Twitter, authentication, OpenID,  newsfeed, tweet, status update, registration, social APIs, sharing, plugin, social bookmark, social network, Facebook, community, comments, reactions, game mechanics, register, Gigya, Social Infrastructure, feed
 Requires at least: 3.6
-Tested up to: 4.1.0
-Stable tag: 5.2.0
+Tested up to: 4.2.2
+Stable tag: 5.2.1
 License: GPLv2 or later
 
 Integrate your WordPress site with Gigya
 
 == Description ==
 Gigya's Customer Identity Management Platform helps companies build better customer relationships by turning unknown visitors into known, loyal and engaged customers. With Gigya’s technology, businesses increase registrations and identify customers across devices, consolidate data into rich customer profiles, and provide better service, products and experiences by integrating data into marketing and service applications.
-
+ 
 More than 700 of the world’s leading businesses such as Fox, Forbes, and Verizon rely on Gigya to build identity-driven relationships and to provide scalable, secure Customer Identity Management.
 
 If you don't have an account yet, <a href="https://console.gigya.com/register.aspx" title="sign up">sign up for a free trial</a>.
